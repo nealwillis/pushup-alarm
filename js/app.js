@@ -921,7 +921,9 @@ function ensureDetector() {
 
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) return;
-  navigator.serviceWorker.register("./sw.js").then((registration) => {
+  // Site root is the directory above /js/, so this works at /pushup-alarm/ and at a local server root.
+  const root = new URL("../", import.meta.url);
+  navigator.serviceWorker.register(new URL("sw.js", root), { scope: root.href }).then((registration) => {
     registration.addEventListener("updatefound", () => {
       const worker = registration.installing;
       if (!worker || !navigator.serviceWorker.controller) return;

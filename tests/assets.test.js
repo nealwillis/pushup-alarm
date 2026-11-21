@@ -14,18 +14,32 @@ test("the page, manifest, and service worker point at real files", () => {
 
   const manifest = JSON.parse(fs.readFileSync("manifest.webmanifest", "utf8"));
   assert.equal(manifest.display, "standalone");
-  assert.equal(manifest.start_url, "./");
+  assert.equal(manifest.start_url, "/pushup-alarm/");
+  assert.equal(manifest.scope, "/pushup-alarm/");
+  assert.equal(manifest.id, "/pushup-alarm/");
   for (const icon of manifest.icons) {
-    assert.ok(fs.existsSync(icon.src), icon.src);
+    assert.ok(icon.src.startsWith("/pushup-alarm/"), icon.src);
+    const file = icon.src.slice("/pushup-alarm/".length);
+    assert.ok(fs.existsSync(file), file);
     assert.match(icon.sizes, /^\d+x\d+$/);
   }
 
   const worker = fs.readFileSync("sw.js", "utf8");
-  const precache = [...worker.matchAll(/"\.\/([^"]+)"/g)].map((match) => match[1]);
-  assert.ok(precache.includes("models/movenet/model.json"));
-  for (const file of precache) {
-    if (file === "") continue;
-    assert.ok(fs.existsSync(file), `service worker missing ${file}`);
+  assert.match(worker, /new URL\("\.\/", self\.location\.href\)/);
+  const app = fs.readFileSync("js/app.js", "utf8");
+  assert.match(app, /new URL\("\.\.\/", import\.meta\.url\)/);
+  for (const file of [
+    "index.html",
+    "manifest.webmanifest",
+    "css/styles.css",
+    "js/app.js",
+    "models/movenet/model.json",
+    "models/movenet/group1-shard1of2.bin",
+    "vendor/tf.min.js",
+    "icons/icon-512.png",
+  ]) {
+    assert.match(worker, new RegExp(file.replace(/[.]/g, "\\.")));
+    assert.ok(fs.existsSync(file), file);
   }
 });
 

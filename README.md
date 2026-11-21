@@ -23,7 +23,7 @@ You need the site on the internet over **https**. The camera will not work from 
 Other hosts that also work, if you already use them:
 
 - **Cloudflare Pages:** create a project, upload this folder, and use the `https://` address Cloudflare gives you.
-- **GitHub Pages:** push this folder to a public repository and turn on Pages for the branch that contains `index.html`. The address looks like `https://yourname.github.io/your-repo/`. Relative links are used throughout, so a project site in a subpath works.
+- **GitHub Pages:** the public copy is the project site [https://nealwillis.github.io/pushup-alarm/](https://nealwillis.github.io/pushup-alarm/) from the public repo `nealwillis/pushup-alarm`. The manifest `start_url` and `scope` are `/pushup-alarm/`, and the service worker registers against the folder that contains it, so the model, icons, and scripts load under that subpath. Open that address directly (with the trailing slash). If you instead publish this folder at the root of some other host, change those manifest fields and the icon paths from `/pushup-alarm/` back to `./`.
 
 The first time you open the site, the iPad needs a network connection so it can store the app for offline use. After that, the pose model and the app shell are cached on the device. The alarm still only rings while the page is open.
 

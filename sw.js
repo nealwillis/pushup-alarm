@@ -1,29 +1,33 @@
-const CACHE = "pushup-alarm-v3";
+const CACHE = "pushup-alarm-v4";
 
-const ASSETS = [
+// Resolved against this worker's URL, so /pushup-alarm/sw.js caches /pushup-alarm/* .
+const ROOT = new URL("./", self.location.href);
+const RELATIVE_ASSETS = [
   "./",
-  "./index.html",
-  "./manifest.webmanifest",
-  "./css/styles.css",
-  "./js/app.js",
-  "./js/alarms.js",
-  "./js/rep-counter.js",
-  "./js/audio.js",
-  "./js/tones.js",
-  "./js/store.js",
-  "./js/pose.js",
-  "./vendor/tf.min.js",
-  "./vendor/pose-detection.js",
-  "./models/movenet/model.json",
-  "./models/movenet/group1-shard1of2.bin",
-  "./models/movenet/group1-shard2of2.bin",
-  "./icons/favicon.svg",
-  "./icons/favicon-32.png",
-  "./icons/apple-touch-icon.png",
-  "./icons/icon-192.png",
-  "./icons/icon-512.png",
-  "./icons/icon-maskable-512.png",
+  "index.html",
+  "manifest.webmanifest",
+  "css/styles.css",
+  "js/app.js",
+  "js/alarms.js",
+  "js/rep-counter.js",
+  "js/audio.js",
+  "js/tones.js",
+  "js/store.js",
+  "js/pose.js",
+  "vendor/tf.min.js",
+  "vendor/pose-detection.js",
+  "models/movenet/model.json",
+  "models/movenet/group1-shard1of2.bin",
+  "models/movenet/group1-shard2of2.bin",
+  "icons/favicon.svg",
+  "icons/favicon-32.png",
+  "icons/apple-touch-icon.png",
+  "icons/icon-192.png",
+  "icons/icon-512.png",
+  "icons/icon-maskable-512.png",
 ];
+const ASSETS = RELATIVE_ASSETS.map((path) => new URL(path, ROOT).href);
+const INDEX = new URL("index.html", ROOT).href;
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
@@ -51,10 +55,10 @@ self.addEventListener("fetch", (event) => {
       fetch(request)
         .then((response) => {
           const copy = response.clone();
-          caches.open(CACHE).then((cache) => cache.put("./index.html", copy));
+          caches.open(CACHE).then((cache) => cache.put(INDEX, copy));
           return response;
         })
-        .catch(() => caches.match("./index.html")),
+        .catch(() => caches.match(INDEX)),
     );
     return;
   }
