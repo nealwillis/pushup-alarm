@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#090a0e">
+  <meta name="description" content="An alarm that keeps ringing until you finish a set of pushups. The camera stays on your iPad.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Pushup Alarm">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="robots" content="noindex">
+  <title>Pushup Alarm</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="icons/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div id="dimmer" class="dimmer" aria-hidden="true"></div>
+  <div class="app" id="app">
+    <header class="topbar">
+      <div class="brand">
+        <img src="icons/favicon-32.png" width="36" height="36" alt="">
+        <span>Pushup Alarm</span>
+      </div>
+      <button id="openSettings" class="btn" type="button">Settings</button>
+    </header>
+
+    <section id="viewNight">
+      <div id="httpsBanner" class="banner warn" hidden>
+        <p>The camera only works over HTTPS (or on localhost). Open the secure link, not a downloaded file.</p>
+      </div>
+      <div id="libBanner" class="banner warn" hidden>
+        <p>The pose library did not load. Connect to the internet once, then reload this page.</p>
+      </div>
+      <div id="updateBanner" class="banner" hidden>
+        <p>A new version is ready.</p>
+        <button id="reloadApp" class="btn" type="button">Reload</button>
+      </div>
+      <div id="installBanner" class="banner">
+        <p><strong>Add to your Home Screen</strong> so it opens full screen. In Safari, tap the Share button, then <strong>Add to Home Screen</strong>.</p>
+        <button id="installDismiss" class="btn" type="button">Hide</button>
+      </div>
+
+      <div class="night">
+        <div class="night-main">
+          <div class="clock-row" id="clockWrap">
+            <p class="clock" id="clockTime">12:00</p>
+            <div class="seconds" id="clockSeconds">00</div>
+          </div>
+          <p class="date" id="clockDate"></p>
+          <p class="next-alarm" id="nextAlarm">No alarm yet.</p>
+          <div class="arm-row">
+            <button id="armButton" class="btn-primary" type="button">Arm alarm</button>
+            <button id="practiceButton" class="btn-quiet" type="button">Practice pushups</button>
+          </div>
+          <p class="arm-status" id="armStatus" role="status"></p>
+          <aside class="tips">
+            <p class="tips-title">Leave this open tonight</p>
+            <ul>
+              <li>Keep the iPad plugged in.</li>
+              <li>Turn the volume all the way up. Unplug headphones if you want the room to hear it.</li>
+              <li>Tap <strong>Arm alarm</strong>, then leave this screen up. Closing Safari or locking the iPad will miss the alarm.</li>
+              <li>Set Auto-Lock to Never: Settings → Display &amp; Brightness → Auto-Lock → Never.</li>
+              <li>Turn on Guided Access so you can’t swipe away: Settings → Accessibility → Guided Access. Open this app, triple-click the top button, then tap Start.</li>
+            </ul>
+          </aside>
+        </div>
+
+        <div class="alarm-column">
+          <h2>
+            Alarms
+            <button id="addAlarm" class="icon-button" type="button" aria-label="Add alarm">+</button>
+          </h2>
+          <ul id="alarmList" class="alarm-list"></ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="viewSettings" hidden>
+      <div class="settings-bar">
+        <button id="backFromSettings" class="btn" type="button">Back</button>
+        <strong>Settings</strong>
+      </div>
+      <div class="settings">
+        <section class="setting-block">
+          <h3>Alarm sound</h3>
+          <div class="choices" id="toneChoices">
+            <button type="button" class="choice" data-tone="classic" aria-pressed="true">Classic</button>
+            <button type="button" class="choice" data-tone="siren" aria-pressed="false">Siren</button>
+            <button type="button" class="choice" data-tone="pierce" aria-pressed="false">Piercing</button>
+          </div>
+          <div class="row-actions">
+            <button id="previewSound" class="btn" type="button">Preview sound</button>
+          </div>
+          <p class="settings-note">Preview uses this tap to unlock iPad audio. The real alarm is much longer and loops until the pushups are done.</p>
+        </section>
+        <section class="setting-block">
+          <h3>Snooze</h3>
+          <label class="check"><input id="allowSnooze" type="checkbox" checked> Allow snooze</label>
+          <label class="field">
+            <span>Snooze length</span>
+            <select id="snoozeMinutes">
+              <option value="1">1 minute</option>
+              <option value="5" selected>5 minutes</option>
+              <option value="10">10 minutes</option>
+            </select>
+          </label>
+          <p class="settings-note">Snooze only pauses the noise. The pushups are still required when it rings again.</p>
+        </section>
+        <section class="setting-block">
+          <h3>Night brightness</h3>
+          <input id="dimRange" class="slider" type="range" min="0" max="0.75" step="0.05" value="0.35" aria-label="Dim the clock while armed">
+          <p class="settings-note">This darkens the clock after you arm the alarm. It does not change the iPad’s system brightness. The pushup screen stays bright.</p>
+        </section>
+        <section class="setting-block">
+          <h3>Camera</h3>
+          <p class="settings-note">Frames are processed on this iPad. Nothing is uploaded. If you tapped Don’t Allow, go to Settings → Safari → Camera → Allow, then on the site tap aA → Website Settings → Camera → Allow, and reload.</p>
+        </section>
+        <section class="setting-block emergency">
+          <details>
+            <summary>Emergency override</summary>
+            <p>Off by default. Turn this on only if the camera cannot work and you still need a way to silence a ringing alarm. You must press and hold for 4 seconds. It is not shown as a skip when the camera is merely asking for permission.</p>
+            <label class="check"><input id="emergencyToggle" type="checkbox"> Allow emergency stop</label>
+          </details>
+        </section>
+        <p class="settings-note">Pushup Alarm stores alarms on this iPad only. Camera video never leaves the device.</p>
+      </div>
+    </section>
+  </div>
+
+  <section id="viewChallenge" class="challenge" hidden aria-label="Pushup challenge">
+    <div class="stage" id="stage">
+      <video id="camVideo" playsinline muted autoplay></video>
+      <canvas id="camCanvas"></canvas>
+      <p id="camMessage" class="cam-message"></p>
+      <div id="cameraHelp" class="camera-help" hidden>
+        <h2 id="cameraHelpTitle">Camera is blocked</h2>
+        <p id="cameraHelpReason">Pushups can only be counted with the front camera. This screen has no skip button.</p>
+        <ol>
+          <li>Open the iPad <strong>Settings</strong> app.</li>
+          <li>Tap <strong>Safari</strong>, then <strong>Camera</strong>, and choose <strong>Ask</strong> or <strong>Allow</strong>.</li>
+          <li>Open this page in Safari, tap <strong>aA</strong> in the address bar, tap <strong>Website Settings</strong>, and set <strong>Camera</strong> to <strong>Allow</strong>.</li>
+          <li>Come back here and tap Try again. If you added the app to the Home Screen, you can also open the site in Safari once to change the permission.</li>
+        </ol>
+        <button id="retryCamera" class="btn-primary" type="button">Try the camera again</button>
+      </div>
+    </div>
+    <div class="hud">
+      <div class="hud-top">
+        <div>
+          <div>
+            <span class="rep-count" id="repCount">0</span>
+            <span class="rep-target" id="repTarget">/ 10</span>
+          </div>
+          <p class="challenge-label" id="challengeLabel">Alarm</p>
+          <div class="bar" aria-hidden="true"><span id="repBar"></span></div>
+        </div>
+      </div>
+      <div class="hud-bottom">
+        <div class="pills">
+          <span id="checkDown" class="pill">Elbows bent and body down</span>
+          <span id="checkUp" class="pill">Arms straight</span>
+        </div>
+        <p id="coach" class="coach" aria-live="polite">Prop the iPad facing you.</p>
+        <div class="hud-actions">
+          <button id="snoozeButton" class="btn-quiet" type="button">Snooze — pushups still required</button>
+          <button id="endPractice" class="btn-quiet" type="button" hidden>End practice</button>
+          <button id="emergencyHold" class="hold" type="button" hidden>Hold 4 seconds to emergency stop</button>
+        </div>
+      </div>
+    </div>
+    <div id="soundGate" class="gate" hidden>
+      <div class="gate-card">
+        <h2>Alarm is running</h2>
+        <p id="gateText">Tap to sound the alarm and open the camera. This does not turn it off. The pushups are still required.</p>
+        <button id="gateButton" class="btn-primary" type="button">Sound the alarm and open the camera</button>
+      </div>
+    </div>
+    <div id="donePanel" class="done-panel" hidden>
+      <div class="done-card">
+        <h2>Alarm off</h2>
+        <p>You finished the set.</p>
+        <button id="doneButton" class="btn-primary" type="button">Back to the clock</button>
+      </div>
+    </div>
+  </section>
+
+  <dialog id="editor">
+    <form id="editorForm" class="sheet">
+      <h2 id="editorTitle">New alarm</h2>
+      <label class="field">
+        <span>Time</span>
+        <input id="alarmTime" type="time" required value="06:30">
+      </label>
+      <label class="field">
+        <span>Label</span>
+        <input id="alarmLabel" type="text" maxlength="40" placeholder="Morning" autocomplete="off">
+      </label>
+      <div class="field">
+        <span>Pushups to shut it off</span>
+        <div class="stepper">
+          <button id="pushMinus" class="step" type="button" aria-label="Fewer pushups">−</button>
+          <input id="alarmPushups" type="number" min="1" max="200" step="1" value="10" inputmode="numeric">
+          <button id="pushPlus" class="step" type="button" aria-label="More pushups">+</button>
+        </div>
+      </div>
+      <div class="field">
+        <span>Repeat</span>
+        <div id="dayRow" class="days"></div>
+        <p class="hint" id="dayHint">No days selected means it rings once, then turns off.</p>
+      </div>
+      <p class="error" id="editorError" role="alert"></p>
+      <div class="sheet-actions">
+        <button class="btn-primary" type="submit">Save</button>
+        <button id="testAlarm" class="btn" type="button">Test this alarm</button>
+        <button id="cancelEdit" class="btn" type="button">Cancel</button>
+        <button id="deleteAlarm" class="btn-quiet" type="button" hidden>Delete</button>
+      </div>
+    </form>
+  </dialog>
+
+  <noscript>
+    <p style="padding:24px">Pushup Alarm needs JavaScript. Turn it on in Safari settings, then reload.</p>
+  </noscript>
+  <script src="vendor/tf.min.js"></script>
+  <script src="vendor/pose-detection.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "name": "pushup-alarm",
+  "private": true,
+  "type": "module",
+  "description": "Pushup Alarm — an installable iPad web app that rings until you finish a set of pushups.",
+  "scripts": {
+    "test": "node --test tests/*.test.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
